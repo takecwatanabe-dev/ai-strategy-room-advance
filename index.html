@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Strategy Room Restored</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script>if(typeof pdfjsLib!=='undefined')pdfjsLib.GlobalWorkerOptions.workerSrc="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";</script>
+<script src="https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js"></script>
+<style>
+  :root { --bg-color: #f0f2f5; --card-bg: #ffffff; --text-main: #333333; --accent-green: #4CAF50; --accent-yui: #ec4899; --accent-gemini: #8b5cf6; --accent-rex: #f59e0b; --shadow-soft: 0 4px 6px -1px rgba(0,0,0,0.1); }
+  body { background-color: var(--bg-color); font-family: 'Helvetica Neue', Arial, sans-serif; color: var(--text-main); margin: 0; padding: 20px; font-size: 16px; }
+  .container { max-width: 1500px; margin: 0 auto; }
+  .card { background: var(--card-bg); border-radius: 16px; box-shadow: var(--shadow-soft); padding: 24px; margin-bottom: 24px; border: 1px solid #e5e7eb; }
+  .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+  .app-title { font-size: 1.5rem; font-weight: 800; color: #1f2937; }
+  .app-ver { font-size: 0.8rem; background: #e5e7eb; padding: 4px 8px; border-radius: 6px; color: #555; vertical-align: middle; margin-left: 10px; }
+  .title-input { width: 100%; padding: 12px; margin-bottom: 15px; border: 2px solid #e5e7eb; border-radius: 10px; font-size: 1.1rem; font-weight: bold; box-sizing: border-box; }
+  textarea { width: 100%; height: 120px; padding: 16px; border: 2px solid #e5e7eb; border-radius: 12px; font-size: 1rem; resize: vertical; outline: none; box-sizing: border-box; transition: 0.2s; }
+  textarea:focus { border-color: var(--accent-green); background: #fcfdfc; }
+  .btn { border: none; padding: 0 24px; height: 48px; border-radius: 10px; font-weight: 700; cursor: pointer; transition: all 0.1s; display: inline-flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); user-select: none; }
+  .btn:active { transform: translateY(2px); box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
+  .btn-secondary { background: #fff; border: 1px solid #d1d5db; color: #4b5563; }
+  .btn-secondary:hover { background: #f9fafb; }
+  .btn-primary { background: var(--accent-green); color: white; box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3); }
+  .btn-primary:hover { background: #43a047; }
+  .btn-ai { background: #f3f4f6; color: #9ca3af; border: 2px solid transparent; min-width: 90px; }
+  .btn-ai.active-yui { background: #fdf2f8; color: var(--accent-yui); border-color: var(--accent-yui); }
+  .btn-ai.active-gemini { background: #f5f3ff; color: var(--accent-gemini); border-color: var(--accent-gemini); }
+  .btn-ai.active-rex { background: #fffbeb; color: var(--accent-rex); border-color: var(--accent-rex); }
+  .toolbar { display: flex; justify-content: space-between; align-items: center; margin-top: 16px; flex-wrap: wrap; gap: 16px; }
+  .preview-area { display: flex; gap: 8px; margin-top: 10px; }
+  .grid-container { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin-top: 30px; }
+  .col { background: var(--card-bg); border-radius: 16px; box-shadow: var(--shadow-soft); display: flex; flex-direction: column; min-height: 500px; border-top: 6px solid #ccc; }
+  .col-header { padding: 16px 20px; font-weight: 800; font-size: 1.1rem; border-bottom: 1px solid #f0f0f0; }
+  .chat-content { padding: 20px; flex-grow: 1; border-radius: 0 0 16px 16px; }
+  .col.yui { border-color: var(--accent-yui); } .col.yui .col-header { color: var(--accent-yui); background: #fdf2f8; border-radius: 16px 16px 0 0; }
+  .col.gemini { border-color: var(--accent-gemini); } .col.gemini .col-header { color: var(--accent-gemini); background: #f5f3ff; border-radius: 16px 16px 0 0; }
+  .col.rex { border-color: var(--accent-rex); } .col.rex .col-header { color: var(--accent-rex); background: #fffbeb; border-radius: 16px 16px 0 0; }
+  .msg-card { border: 1px solid #eee; border-radius: 12px; margin-bottom: 20px; overflow: hidden; background: #fff; }
+  .msg-head { background: #f9fafb; padding: 12px 15px; border-bottom: 1px solid #eee; font-size: 0.9rem; color: #555; display: flex; justify-content: space-between; align-items: center; }
+  .msg-body { padding: 15px; line-height: 1.7; font-size: 1rem; overflow-wrap: anywhere; }
+  .msg-body pre { background: #2d3748; color: #fff; padding: 10px; border-radius: 6px; overflow-x: auto; }
+  .card-delete { cursor: pointer; color: #dc2626; padding: 2px 8px; background: #fee2e2; border-radius: 4px; font-weight: bold; font-size: 0.8rem; }
+  .card-image { max-width: 100%; border-radius: 8px; margin-top: 10px; border: 1px solid #eee; }
+  .loading-bar { height: 4px; width: 100%; background: linear-gradient(90deg, var(--accent-yui), var(--accent-gemini), var(--accent-rex)); background-size: 200% 100%; animation: grad 2s infinite linear; display: none; margin-top: 16px; }
+  @keyframes grad { 0% { background-position: 100% 0; } 100% { background-position: -100% 0; } }
+  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: none; justify-content: center; align-items: center; z-index: 2000; }
+  .modal-content { background: #fff; width: 90%; max-width: 800px; max-height: 80vh; border-radius: 16px; padding: 25px; display: flex; flex-direction: column; }
+  .log-item { padding: 15px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; transition: 0.1s; }
+  .log-item:hover { background: #f9f9f9; }
+  .log-info { cursor: pointer; flex-grow: 1; font-weight: bold; color: #444; }
+  .log-del-btn { cursor: pointer; background: #fee2e2; color: #dc2626; padding: 6px 12px; border-radius: 6px; font-weight: bold; font-size: 0.8rem; }
+  @media (max-width: 1024px) { .grid-container { grid-template-columns: 1fr; } .toolbar { flex-direction: column; align-items: stretch; } .btn { width: 100%; } .ai-toggles { display: flex; justify-content: space-between; } .btn-ai { flex: 1; } }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <div class="app-title">AI Strategy Room <span class="app-ver">Restored v9.1</span></div>
+    <div style="display:flex; gap:10px;">
+      <button class="btn btn-secondary" onclick="openHistoryModal()">📂 過去ログ</button>
+      <button class="btn btn-secondary" onclick="tryReset()">🔄 リセット</button>
+    </div>
+  </div>
+  <div class="card">
+    <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
+      <div id="saveStatus" style="font-size:0.9rem; color:var(--accent-green); font-weight:bold;"></div>
+      <div id="clock" style="color:#888;"></div>
+    </div>
+    <input type="text" id="topicTitle" class="title-input" placeholder="タイトル (未入力なら自動生成)">
+    <textarea id="themeInput" placeholder="ここに議題を入力してください... (Ctrl+Vで画像貼り付け可能)"></textarea>
+    <div id="loadingBar" class="loading-bar"></div>
+    <div class="toolbar">
+      <div style="flex:1;">
+        <input type="file" id="fileInput" hidden multiple onchange="handleFileSelect(event)">
+        <div style="display:flex; gap:10px;">
+          <button class="btn btn-secondary" onclick="document.getElementById('fileInput').click()">📷 画像</button>
+          <button class="btn btn-secondary" onclick="pasteFromClipboard()">📋 貼付</button>
+          <button class="btn btn-secondary" onclick="resetInput()">🧹 クリア</button>
+        </div>
+        <div id="previewArea" class="preview-area"></div>
+      </div>
+      <div style="display:flex; gap:16px; flex-wrap:wrap; align-items:center; justify-content:flex-end;">
+        <select id="speakerSelect" style="padding:0 10px; height:48px; border-radius:10px; border:1px solid #d1d5db; font-weight:bold; background:#fff;"><option>User</option><option>Yui</option><option>Gemini</option><option>Rex</option></select>
+        <div class="ai-toggles">
+          <button id="btn-yui" class="btn btn-ai" onclick="toggleAgent('yui')">♥ Yui</button>
+          <button id="btn-gemini" class="btn btn-ai" onclick="toggleAgent('gemini')">♦ Gemini</button>
+          <button id="btn-rex" class="btn btn-ai" onclick="toggleAgent('rex')">♠ Rex</button>
+        </div>
+        <button class="btn btn-primary" onclick="startDiscuss()">DISCUSS 🚀</button>
+      </div>
+    </div>
+  </div>
+  <div class="grid-container">
+    <div class="col yui"><div class="col-header">♥ Yui (Secretary)</div><div class="chat-content" id="hist-yui"></div></div>
+    <div class="col gemini"><div class="col-header">♦ Gemini (Analyst)</div><div class="chat-content" id="hist-gemini"></div></div>
+    <div class="col rex"><div class="col-header">♠ Rex (Red Team)</div><div class="chat-content" id="hist-rex"></div></div>
+  </div>
+</div>
+<div id="historyModal" class="modal-overlay"><div class="modal-content"><div style="display:flex;justify-content:space-between;margin-bottom:15px;"><h2>📂 過去ログ</h2><button onclick="closeHistoryModal()" class="btn btn-secondary">✕</button></div><div id="logList" style="overflow-y:auto;"></div></div></div>
+
+<script>
+let selectedAgents = []; let imagesBase64 = []; let historyData = { perAIHistory: { yui: [], gemini: [], rex: [] } }; let sessionId = "SESS_" + Date.now();
+const STORAGE_KEY = 'ai_room_restored_v9_1';
+
+window.onload = () => { updateClock(); setInterval(updateClock, 60000); toggleAgent('all'); loadStorage(); };
+function updateClock() { document.getElementById('clock').innerText = new Date().toLocaleString('ja-JP', {hour:'2-digit', minute:'2-digit'}); }
+function toggleAgent(agent) {
+  if (agent === 'all') selectedAgents = (selectedAgents.length === 3) ? [] : ['yui', 'gemini', 'rex'];
+  else selectedAgents = selectedAgents.includes(agent) ? selectedAgents.filter(a => a !== agent) : [...selectedAgents, agent];
+  ['yui', 'gemini', 'rex'].forEach(a => {
+    const btn = document.getElementById('btn-' + a);
+    if (selectedAgents.includes(a)) { btn.classList.add('active-' + a); btn.style.opacity = "1"; }
+    else { btn.classList.remove('active-' + a); btn.style.opacity = "0.6"; }
+  });
+}
+function startDiscuss() {
+  const theme = document.getElementById('themeInput').value;
+  if (!theme && !imagesBase64.length) return alert("内容を入力してください");
+  if (selectedAgents.length === 0) return alert("AIを選択してください");
+  document.getElementById('loadingBar').style.display = 'block';
+  const speaker = document.getElementById('speakerSelect').value;
+  const prompt = (speaker !== 'User' ? `【${speaker}の発言】\n` : '') + theme;
+  google.script.run.logUserAction(sessionId, theme, document.getElementById('topicTitle').value);
+  let done = 0;
+  selectedAgents.forEach(agent => {
+    const div = document.getElementById('hist-' + agent);
+    const id = Date.now();
+    let imgHtml = imagesBase64.map(src => `<img src="${src}" class="card-image">`).join('');
+    div.insertAdjacentHTML('afterbegin', `<div class="msg-card"><div class="msg-head"><span><b>${speaker}</b> ${new Date().toLocaleTimeString()}</span><span class="card-delete" onclick="this.closest('.msg-card').remove(); saveStorage();">×</span></div><div class="msg-body" style="background:#f0fdf4; border-bottom:1px solid #eee;">${theme.substring(0, 100)}${theme.length>100?'...':''}${imgHtml}</div><div class="msg-body" id="ans-${agent}-${id}">Thinking...</div></div>`);
+    google.script.run.withSuccessHandler(res => {
+      let html = res.response.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/```(\w+)?\n([\s\S]*?)```/g, '<pre><code>$2</code></pre>');
+      document.getElementById(`ans-${agent}-${id}`).innerHTML = html;
+      if (++done >= selectedAgents.length) finish();
+    }).withFailureHandler(e => {
+      document.getElementById(`ans-${agent}-${id}`).innerText = "Error: " + e.message;
+      if (++done >= selectedAgents.length) finish();
+    }).runRelay(prompt, document.getElementById('topicTitle').value, imagesBase64, agent, historyData, sessionId);
+  });
+  function finish() { document.getElementById('loadingBar').style.display = 'none'; document.getElementById('themeInput').value = ''; imagesBase64 = []; document.getElementById('previewArea').innerHTML = ''; saveStorage(); document.getElementById('saveStatus').innerText = "✅ 保存完了"; }
+}
+
+async function handleFileSelect(e) {
+  const files = Array.from(e.target.files);
+  for (const file of files) {
+    try {
+      const compressed = await compressFile(file);
+      imagesBase64.push(compressed);
+      document.getElementById('previewArea').innerHTML += `<img src="${compressed}" style="height:40px; border-radius:4px; border:1px solid #ccc;">`;
+    } catch(err) { alert("画像処理エラー: " + err); }
+  }
+  e.target.value = '';
+}
+async function pasteFromClipboard() {
+  const items = await navigator.clipboard.read();
+  for (const item of items) {
+    const type = item.types.find(t => t.startsWith('image/'));
+    if (type) {
+      const blob = await item.getType(type);
+      const compressed = await compressFile(blob);
+      imagesBase64.push(compressed);
+      document.getElementById('previewArea').innerHTML += `<img src="${compressed}" style="height:40px; border-radius:4px; border:1px solid #ccc;">`;
+    }
+  }
+}
+async function compressFile(fileBlob) {
+  if (fileBlob.type === 'application/pdf') {
+    const ab = await fileBlob.arrayBuffer();
+    const pdf = await pdfjsLib.getDocument({data: ab}).promise;
+    const page = await pdf.getPage(1);
+    const viewport = page.getViewport({scale: 1.5});
+    const cvs = document.createElement('canvas'); cvs.width = viewport.width; cvs.height = viewport.height;
+    await page.render({canvasContext: cvs.getContext('2d'), viewport}).promise;
+    return compressCanvas(cvs);
+  }
+  if (fileBlob.name && fileBlob.name.match(/\.heic$/i)) {
+    const blob = await heic2any({blob: fileBlob, toType: 'image/jpeg', quality: 0.8});
+    return readAsDataURL(blob).then(url => compressImageByUrl(url));
+  }
+  const url = await readAsDataURL(fileBlob);
+  return compressImageByUrl(url);
+}
+function readAsDataURL(blob) { return new Promise(r => { const fr = new FileReader(); fr.onload=e=>r(e.target.result); fr.readAsDataURL(blob); }); }
+function compressImageByUrl(url) {
+  return new Promise(resolve => {
+    const img = new Image();
+    img.onload = () => {
+      const cvs = document.createElement('canvas');
+      let w = img.width, h = img.height;
+      const maxDim = 1600; 
+      if (w>maxDim || h>maxDim) { const r = Math.min(maxDim/w, maxDim/h); w*=r; h*=r; }
+      cvs.width = w; cvs.height = h;
+      const ctx = cvs.getContext('2d');
+      ctx.drawImage(img, 0, 0, w, h);
+      resolve(compressCanvas(cvs));
+    };
+    img.src = url;
+  });
+}
+async function compressCanvas(canvas) {
+  let quality = 0.8;
+  let dataUrl = canvas.toDataURL('image/jpeg', quality);
+  while (dataUrl.length > 2000000 && quality > 0.1) { 
+    quality -= 0.1;
+    dataUrl = canvas.toDataURL('image/jpeg', quality);
+  }
+  return dataUrl;
+}
+
+function resetInput() { document.getElementById('themeInput').value=''; imagesBase64=[]; document.getElementById('previewArea').innerHTML=''; }
+function tryReset() { if(confirm("リセットしますか？")) { localStorage.removeItem(STORAGE_KEY); location.reload(); } }
+function saveStorage() { localStorage.setItem(STORAGE_KEY, JSON.stringify({ historyData, sessionId, yui: document.getElementById('hist-yui').innerHTML, gemini: document.getElementById('hist-gemini').innerHTML, rex: document.getElementById('hist-rex').innerHTML })); }
+function loadStorage() { 
+  const d = JSON.parse(localStorage.getItem(STORAGE_KEY)); 
+  if(d){ historyData = d.historyData; sessionId = d.sessionId; ['yui','gemini','rex'].forEach(a => document.getElementById('hist-'+a).innerHTML = d[a] || ""); } 
+}
+function openHistoryModal() { 
+  document.getElementById('historyModal').style.display='flex'; 
+  google.script.run.withSuccessHandler(list => { 
+    if(!list.length) { document.getElementById('logList').innerHTML = '<div style="padding:15px; color:#999;">ログなし</div>'; return; }
+    document.getElementById('logList').innerHTML = list.map(l=>`
+      <div class="log-item">
+        <div class="log-info" onclick="loadLog('${l.id}')">${l.time} ${l.title}</div>
+        <div class="log-del-btn" onclick="deleteLog('${l.id}', this)">削除</div>
+      </div>`).join(''); 
+  }).getLogList(); 
+}
+function closeHistoryModal() { document.getElementById('historyModal').style.display='none'; }
+function loadLog(id) {
+  if(confirm("このログを読み込みますか？")) {
+    closeHistoryModal();
+    google.script.run.withSuccessHandler(logs => {
+      resetInput(); ['yui','gemini','rex'].forEach(a => document.getElementById('hist-'+a).innerHTML="");
+      logs.forEach(l => { if(l.speaker!=='User') { const a = l.speaker.toLowerCase(); document.getElementById('hist-'+a).insertAdjacentHTML('afterbegin', `<div class="msg-card"><div class="msg-head"><span><b>${l.speaker}</b></span><span class="card-delete" onclick="this.closest('.msg-card').remove();">×</span></div><div class="msg-body">${l.content.replace(/\n/g,'<br>')}</div></div>`); } });
+    }).getSessionLogs(id);
+  }
+}
+function deleteLog(id, el) {
+  if(confirm("本当に削除しますか？")) {
+    google.script.run.withSuccessHandler(res => {
+      if(res.success) el.parentElement.remove();
+      else alert("削除失敗: " + res.message);
+    }).deleteLog(id);
+  }
+}
+</script>
+</body>
+</html>
