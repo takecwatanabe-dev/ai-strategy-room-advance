@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>AI Strategy Room Restored</title>
+<title>AI Strategy Room Advance</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script>if(typeof pdfjsLib!=='undefined')pdfjsLib.GlobalWorkerOptions.workerSrc="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";</script>
 <script src="https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js"></script>
@@ -57,7 +57,7 @@
 <body>
 <div class="container">
   <div class="header">
-    <div class="app-title">AI Strategy Room <span class="app-ver">Restored v9.1</span></div>
+    <div class="app-title">AI Strategy Room <span class="app-ver">Full Feature v9.2.1</span></div>
     <div style="display:flex; gap:10px;">
       <button class="btn btn-secondary" onclick="openHistoryModal()">📂 過去ログ</button>
       <button class="btn btn-secondary" onclick="tryReset()">🔄 リセット</button>
@@ -78,6 +78,7 @@
           <button class="btn btn-secondary" onclick="document.getElementById('fileInput').click()">📷 画像</button>
           <button class="btn btn-secondary" onclick="pasteFromClipboard()">📋 貼付</button>
           <button class="btn btn-secondary" onclick="resetInput()">🧹 クリア</button>
+          <button class="btn btn-secondary" style="color:#24292e;" onclick="uploadCode()">💾 GitHub</button>
         </div>
         <div id="previewArea" class="preview-area"></div>
       </div>
@@ -102,7 +103,7 @@
 
 <script>
 let selectedAgents = []; let imagesBase64 = []; let historyData = { perAIHistory: { yui: [], gemini: [], rex: [] } }; let sessionId = "SESS_" + Date.now();
-const STORAGE_KEY = 'ai_room_restored_v9_1';
+const STORAGE_KEY = 'ai_room_final_v9_2_1';
 
 window.onload = () => { updateClock(); setInterval(updateClock, 60000); toggleAgent('all'); loadStorage(); };
 function updateClock() { document.getElementById('clock').innerText = new Date().toLocaleString('ja-JP', {hour:'2-digit', minute:'2-digit'}); }
@@ -115,6 +116,20 @@ function toggleAgent(agent) {
     else { btn.classList.remove('active-' + a); btn.style.opacity = "0.6"; }
   });
 }
+
+function uploadCode() {
+  const content = document.getElementById('themeInput').value;
+  if(!content) return alert("保存するコードやテキストを入力欄に貼り付けてください。");
+  const fileName = prompt("保存するファイル名を入力してください (例: Code.gs)", "Code.gs");
+  if(!fileName) return;
+  const status = document.getElementById('saveStatus');
+  status.innerText = "⏳ GitHub送信中...";
+  google.script.run
+    .withSuccessHandler(msg => { status.innerText = msg; alert(msg); })
+    .withFailureHandler(e => { status.innerText = "Error"; alert(e); })
+    .uploadToGithub(fileName, content);
+}
+
 function startDiscuss() {
   const theme = document.getElementById('themeInput').value;
   if (!theme && !imagesBase64.length) return alert("内容を入力してください");
